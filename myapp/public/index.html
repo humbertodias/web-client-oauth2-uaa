@@ -1,0 +1,66 @@
+<html>
+<head>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" integrity="sha512-dTfge/zgoMYpP7QbHy4gWMEGsbsdZeCXz7irItjcC3sPUFtf0kuFbDz/ixG7ArTxmDjLXDmezHubeNikyKGVyQ==" crossorigin="anonymous">
+
+<!-- Optional theme -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css" integrity="sha384-aUGj/X2zp5rLCbBxumKTCw2Z50WgIr1vs/PFN4praOTvYXWlVyh2UtNUU0KAUhAX" crossorigin="anonymous">
+
+<!-- Latest compiled and minified JavaScript -->
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js" integrity="sha512-K1qjQ+NcF2TYO/eI3M6v8EiNYZfA95pQumfvcVrTHtwQVDG+aHRqLi/ETn2uB+1JqwYqVG3LIvdm9lj6imS/pQ==" crossorigin="anonymous"></script>
+</head>
+<body>
+<div class="container-fluid">
+
+  <div class="panel panel-default">
+    <div class="panel-heading"><h1>Teste de UAA Login Server/<h1></div>
+    <div class="panel-body">
+      Esse WebApp simula uma aplicacao que faz uso do UAA Login Server para
+autenticacao via OpenID Connect.
+    </div>
+  </div>
+  <hr>
+
+  
+  <form action="http://localhost:8080/uaa/oauth/authorize">
+    <div class="form-group">
+     <label for="client_id">Client ID:</label>
+     <input type="text" name="client_id" value="myapp2"></input>
+    </div>
+<!--
+    <div class="form-group">
+      <label for="client_secret">Client Secret:</label>
+      <input type="text" name="client_secret" value="myapp2clientsecret"></input>
+    </div>
+-->
+    <div class="form-group">
+     <label for="response_type">Response Type:</label>
+     <input type="text" name="response_type" value="code"></input>
+    </div>
+
+    <div class="form-group">
+     <label for="scope">Scope:</label>
+     <input type="text" name="scope" value="openid"></input>
+    </div>
+
+<!--
+    <div class="form-group">
+     <label for="redirect_uri">Redirect URI:</label>
+     <input type="text" name="redirect_uri" value="http://localhost:3030/callback"></input>
+    </div>
+-->
+
+<!--
+    <div class="form-group">
+      <label for="X-Uaa-Csrf">X-Uaa-Csrf:</label>
+      <input type="text" name="X-Uaa-Csrf" value="Pxoh"></input>
+   </div>
+-->
+
+   <button type="submit" class="btn btn-default">Login</button>
+  </form>
+  
+</div>
+</body>
+</html>
+

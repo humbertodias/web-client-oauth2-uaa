@@ -14,8 +14,8 @@ var JWT = require('jsonwebtoken');
 var app = express();
 
 // para acessar UAA
-var clientid = 'myapp2'
-var clientsecret = 'myapp2clientsecret'
+var clientid = 'myapp'
+var clientsecret = 'myappclientsecret'
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));

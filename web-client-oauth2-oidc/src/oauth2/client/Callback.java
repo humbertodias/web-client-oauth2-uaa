@@ -228,22 +228,27 @@ public class Callback extends HttpServlet {
 		// tokenKeyEndpointURL
 
 		// XXXX
-		// JWSObject jwsObject = JWSObject.parse(idToken.getParsedString());
-		//
-		// if (!jwsObject.verify(idToken))
-		// {
-		// throw new IllegalArgumentException("Fraudulent JWT token: " + jwt);
-		// }
+//		 JWSObject jwsObject = JWSObject.parse(idToken.getParsedString());
+//		
+//		 if (!jwsObject.verify(idToken))
+//		 {
+//		 throw new IllegalArgumentException("Fraudulent JWT token: " + jwt);
+//		 }
 
 		// tokenKeyEndpointURL
 		URL tokenKeyEndpointURL = new URL(Configuration.TOKEN_KEY_URI);
 		try {
-
-			UserInfoRequest tokenKeyRequest = new UserInfoRequest(tokenKeyEndpointURL.toURI(), accessToken);
-
-			httpResponse = tokenKeyRequest.toHTTPRequest().send();
 			
-			out.println(httpResponse.getContent());
+			UserInfoRequest tokenKeyRequest = new UserInfoRequest(tokenKeyEndpointURL.toURI(), accessToken);
+			httpRequest = tokenKeyRequest.toHTTPRequest();
+
+			// Aplica autenticação básica
+			ClientSecretBasic basic  = new ClientSecretBasic(clientID, clientSecret);
+			basic.applyTo(httpRequest);
+			
+			httpResponse = httpRequest.send();
+			out.println(tokenKeyEndpointURL.toString());
+			out.println("<pre>" + httpResponse.getContent() + "</pre>");
 
 		} catch (Exception e) {
 			out.println(e.getMessage());
@@ -267,6 +272,7 @@ public class Callback extends HttpServlet {
 
 			httpResponse = userInfoRequest.toHTTPRequest().send();
 			
+			out.println(userinfoEndpointURL.toString());
 			out.println("<pre>" + httpResponse.getContent() + "</pre>");
 
 		} catch (Exception e) {

@@ -46,8 +46,7 @@ public class SignIn extends HttpServlet {
 		Nonce nonce = new Nonce();
 
 		// Create the actual OIDC authorisation request object
-		AuthenticationRequest authRequest = new AuthenticationRequest(redirectURI.toURI(), rt, scope, clientID,
-				redirectURI.toURI(), state, nonce);
+		AuthenticationRequest authRequest = new AuthenticationRequest(redirectURI.toURI(), rt, scope, clientID, redirectURI.toURI(), state, nonce);
 
 		// Get the resulting URL query string with the authorisation
 		// request encoded into it

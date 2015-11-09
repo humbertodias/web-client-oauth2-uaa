@@ -1,10 +1,10 @@
-
+package oauth2.client;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class OAuth2Configuration {
+public class Configuration {
 
 	public static String CLIENT_ID;
 	public static String CALLBACK_URI;
@@ -12,12 +12,13 @@ public class OAuth2Configuration {
 
 	public static String CLIENT_SECRET;
 	public static String TOKEN_URI;
-	public static String PROFILE_URI;
+	public static String USER_INFO_URI;
+	public static String TOKEN_KEY_URI;
 	public static String SCOPE;
 	public static String RESOURCE_NAME;
 
 	static {
-		loadConfiguration("settings");
+		loadConfiguration("uaa");
 	}
 
 	/**
@@ -28,7 +29,7 @@ public class OAuth2Configuration {
 	public static void loadConfiguration(String resourceName) {
 		try {
 
-			InputStream resource = OAuth2Configuration.class.getResourceAsStream("/" + resourceName + ".properties");
+			InputStream resource = Configuration.class.getResourceAsStream("/" + resourceName + ".properties");
 
 			Properties properties = new Properties();
 			properties.load(resource);
@@ -42,18 +43,16 @@ public class OAuth2Configuration {
 			// 2)
 			CLIENT_SECRET = properties.getProperty("CLIENT_SECRET");
 			TOKEN_URI = properties.getProperty("TOKEN_URI");
-			PROFILE_URI = properties.getProperty("PROFILE_URI");
+
+			// 3) Adicional
+			USER_INFO_URI = properties.getProperty("USER_INFO_URI");
+			TOKEN_KEY_URI = properties.getProperty("TOKEN_KEY_URI");
 
 			RESOURCE_NAME = resourceName;
 
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	public static String urlAuthorization() {
-		return AUTHORIZATION_URI + "?scope=" + SCOPE + "&redirect_uri=" + CALLBACK_URI + "&response_type=code"
-				+ "&client_id=" + CLIENT_ID + "&approval_prompt=force&service_name=" + RESOURCE_NAME;
 	}
 
 }

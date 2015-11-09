@@ -51,10 +51,10 @@ user account successfully updated
 
 # WebClient
 
-Execute a aplicação client
+Execute a aplicação cliente
 
 ```
-mvn clean package tomcat7:run-war
+mvn tomcat7:run-war
 ```
 
 ```
@@ -74,4 +74,5 @@ INFO: Starting ProtocolHandler ["http-bio-3030"]
 
 # Navegador
 
-http://localhost:3030
+[http://localhost:3030](http://localhost:3030)
+

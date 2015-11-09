@@ -1,3 +1,5 @@
+package oauth2.client;
+
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
@@ -47,7 +49,7 @@ import net.minidev.json.JSONObject;
  * OpenID Connect login callback target.
  */
 @WebServlet("/callback")
-public class OIDCLoginCallback extends HttpServlet {
+public class Callback extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
 	@Override
@@ -61,7 +63,13 @@ public class OIDCLoginCallback extends HttpServlet {
 		String queryString = req.getQueryString();
 
 		PrintWriter out = resp.getWriter();
+		
+		out.println("<html>");
+		out.println("<head><title>Nimbus OpenID Connect Test Client</title></head>");
 
+		out.println("<body>");
+
+		
 		out.println("URL query string with encoded authorization response: " + queryString + "\n\n");
 
 		if (queryString == null || queryString.trim().isEmpty()) {
@@ -74,7 +82,8 @@ public class OIDCLoginCallback extends HttpServlet {
 		AuthenticationResponse authResponse;
 
 		try {
-			authResponse = AuthenticationResponseParser.parse(new URL(OAuth2Configuration.AUTHORIZATION_URI + "?" + queryString).toURI());
+			authResponse = AuthenticationResponseParser
+					.parse(new URL(Configuration.AUTHORIZATION_URI + "?" + queryString).toURI());
 		} catch (Exception e) {
 
 			out.println("Couldn't parse OpenID Connect authentication response: " + e.getMessage());
@@ -109,26 +118,25 @@ public class OIDCLoginCallback extends HttpServlet {
 		// Compose an access token request, authenticating the client
 		// app and exchanging the authorisation code for an ID token
 		// and access token
-		URL tokenEndpointURL = new URL(OAuth2Configuration.TOKEN_URI);
+		URL tokenEndpointURL = new URL(Configuration.TOKEN_URI);
 
 		out.println("Sending access token request to " + tokenEndpointURL + "\n\n");
 
 		// We authenticate with "client secret basic"
-		ClientID clientID = new ClientID(OAuth2Configuration.CLIENT_ID);
-		Secret clientSecret = new Secret(OAuth2Configuration.CLIENT_SECRET);
+		ClientID clientID = new ClientID(Configuration.CLIENT_ID);
+		Secret clientSecret = new Secret(Configuration.CLIENT_SECRET);
 		ClientAuthentication clientAuth = new ClientSecretBasic(clientID, clientSecret);
 
 		Scope scope = new Scope();
-		
-		
+
 		HTTPRequest httpRequest;
 
 		try {
 
-	AuthorizationCodeGrant acg = new AuthorizationCodeGrant(code, new URI(OAuth2Configuration.CALLBACK_URI));
-	
-	TokenRequest accessTokenRequest = new TokenRequest(tokenEndpointURL.toURI(), clientAuth, acg, scope);
-			
+			AuthorizationCodeGrant acg = new AuthorizationCodeGrant(code, new URI(Configuration.CALLBACK_URI));
+
+			TokenRequest accessTokenRequest = new TokenRequest(tokenEndpointURL.toURI(), clientAuth, acg, scope);
+
 			httpRequest = accessTokenRequest.toHTTPRequest();
 
 		} catch (SerializeException | URISyntaxException e) {
@@ -173,12 +181,13 @@ public class OIDCLoginCallback extends HttpServlet {
 		RefreshToken refreshToken = tokenSuccess.getRefreshToken();
 		SignedJWT idToken = (SignedJWT) tokenSuccess.getIDToken();
 
-		
 		out.println("Token response:");
 
 		out.println("\tAccess token: " + accessToken.toJSONObject().toString());
 		out.println("\tRefresh token: " + refreshToken);
 		out.println("\n\n");
+
+		out.println("<hr/>");
 
 		// *** *** *** Process ID token which contains user auth information ***
 		// *** *** //
@@ -187,9 +196,9 @@ public class OIDCLoginCallback extends HttpServlet {
 			out.println("ID token [raw]: " + idToken.getParsedString());
 
 			out.println("ID token JWS header: " + idToken.getHeader());
-			
-			out.println("payload:" + idToken.getPayload().toString());
-			
+
+			out.println("<br/>payload: <pre>" + idToken.getPayload().toString() + "</pre>");
+
 			// Validate the ID token by checking its HMAC;
 			// Note that PayPal HMAC generation is probably incorrect,
 			// there's also a bug in the "exp" claim type
@@ -203,8 +212,9 @@ public class OIDCLoginCallback extends HttpServlet {
 
 				JSONObject jsonObject = idToken.getJWTClaimsSet().toJSONObject();
 
-//				out.println("ID token [claims set]: \n" + new PrettyJson().format(jsonObject));
-				out.println("ID token [claims set]: \n" + jsonObject.toJSONString() );
+				// out.println("ID token [claims set]: \n" + new
+				// PrettyJson().format(jsonObject));
+				out.println("ID token [claims set]: \n" + jsonObject.toJSONString());
 
 				out.println("\n\n");
 
@@ -213,35 +223,34 @@ public class OIDCLoginCallback extends HttpServlet {
 				out.println("Couldn't process ID token: " + e.getMessage());
 			}
 		}
+		out.println("<hr/>");
 
-		//tokenKeyEndpointURL
-		
-		  //XXXX
-//			JWSObject jwsObject = JWSObject.parse(idToken.getParsedString());
-//
-//		    if (!jwsObject.verify(idToken))
-//		    {
-//		        throw new IllegalArgumentException("Fraudulent JWT token: " + jwt);
-//		    }
-		  //XXXX
-		    
-		
-//		URL tokenKeyEndpointURL = new URL("http://localhost:8080/uaa/token_key");
-//		try{
-//			
-//			UserInfoRequest userInfoRequest = new UserInfoRequest(tokenKeyEndpointURL.toURI(), accessToken);
-//
-//			httpResponse = userInfoRequest.toHTTPRequest().send();
-//			
-//			out.println( httpResponse.getContent());
-//			
-//			
-//			
-//		}catch(Exception e){
-//			out.println( e.getMessage() );
-//		}
-//		//tokenKeyEndpointURL
-		
+		// tokenKeyEndpointURL
+
+		// XXXX
+		// JWSObject jwsObject = JWSObject.parse(idToken.getParsedString());
+		//
+		// if (!jwsObject.verify(idToken))
+		// {
+		// throw new IllegalArgumentException("Fraudulent JWT token: " + jwt);
+		// }
+
+		// tokenKeyEndpointURL
+		URL tokenKeyEndpointURL = new URL(Configuration.TOKEN_KEY_URI);
+		try {
+
+			UserInfoRequest tokenKeyRequest = new UserInfoRequest(tokenKeyEndpointURL.toURI(), accessToken);
+
+			httpResponse = tokenKeyRequest.toHTTPRequest().send();
+			
+			out.println(httpResponse.getContent());
+
+		} catch (Exception e) {
+			out.println(e.getMessage());
+		}
+		// tokenKeyEndpointURL
+
+		out.println("<hr/>");
 		
 		// *** *** *** Make a UserInfo endpoint request *** *** *** //
 
@@ -250,8 +259,7 @@ public class OIDCLoginCallback extends HttpServlet {
 		// we cannot use its helper call. We can however make a direct
 		// call and simply display the raw data.
 
-		URL userinfoEndpointURL = new URL("http://localhost:8080/uaa/userinfo");
-		
+		URL userinfoEndpointURL = new URL(Configuration.USER_INFO_URI);
 
 		try {
 			// Append the access token to form actual request
@@ -259,7 +267,7 @@ public class OIDCLoginCallback extends HttpServlet {
 
 			httpResponse = userInfoRequest.toHTTPRequest().send();
 			
-			out.println( httpResponse.getContent());
+			out.println("<pre>" + httpResponse.getContent() + "</pre>");
 
 		} catch (Exception e) {
 
@@ -285,12 +293,14 @@ public class OIDCLoginCallback extends HttpServlet {
 			return;
 		}
 
+		out.println("<hr/>");
 		UserInfo userInfo = ((UserInfoSuccessResponse) userInfoResponse).getUserInfo();
 
 		out.println("UserInfo:");
 
 		try {
-//			out.println(new PrettyJson().parseAndFormat(userInfo.toJSONObject().toString()));
+			// out.println(new
+			// PrettyJson().parseAndFormat(userInfo.toJSONObject().toString()));
 			out.println(userInfo.toJSONObject().toString());
 
 		} catch (Exception e) {
@@ -298,5 +308,10 @@ public class OIDCLoginCallback extends HttpServlet {
 			out.println("Couldn't parse UserInfo JSON object: " + e.getMessage());
 		}
 
+		
+		out.println("</body>");
+		out.println("</html>");
+		
+		
 	}
 }

@@ -31,7 +31,7 @@
                 <version>2.2</version>
                 <configuration>
                     <path>/</path>
-                    <port>9090</port>
+                    <port>3030</port>
                 </configuration>
             </plugin>			
 			

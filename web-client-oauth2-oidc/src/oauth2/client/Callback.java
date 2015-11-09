@@ -17,7 +17,6 @@ import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.TokenErrorResponse;
@@ -37,11 +36,7 @@ import com.nimbusds.openid.connect.sdk.AuthenticationResponseParser;
 import com.nimbusds.openid.connect.sdk.AuthenticationSuccessResponse;
 import com.nimbusds.openid.connect.sdk.OIDCAccessTokenResponse;
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponseParser;
-import com.nimbusds.openid.connect.sdk.UserInfoErrorResponse;
 import com.nimbusds.openid.connect.sdk.UserInfoRequest;
-import com.nimbusds.openid.connect.sdk.UserInfoResponse;
-import com.nimbusds.openid.connect.sdk.UserInfoSuccessResponse;
-import com.nimbusds.openid.connect.sdk.claims.UserInfo;
 
 import net.minidev.json.JSONObject;
 
@@ -69,6 +64,7 @@ public class Callback extends HttpServlet {
 
 		out.println("<body>");
 
+		out.println("<pre>");
 		
 		out.println("URL query string with encoded authorization response: " + queryString + "\n\n");
 
@@ -212,8 +208,6 @@ public class Callback extends HttpServlet {
 
 				JSONObject jsonObject = idToken.getJWTClaimsSet().toJSONObject();
 
-				// out.println("ID token [claims set]: \n" + new
-				// PrettyJson().format(jsonObject));
 				out.println("ID token [claims set]: \n" + jsonObject.toJSONString());
 
 				out.println("\n\n");
@@ -223,18 +217,25 @@ public class Callback extends HttpServlet {
 				out.println("Couldn't process ID token: " + e.getMessage());
 			}
 		}
+		out.println("</pre>");
+
 		out.println("<hr/>");
 
 		// tokenKeyEndpointURL
 
 		// XXXX
+//		try{
 //		 JWSObject jwsObject = JWSObject.parse(idToken.getParsedString());
-//		
+//
 //		 if (!jwsObject.verify(idToken))
 //		 {
 //		 throw new IllegalArgumentException("Fraudulent JWT token: " + jwt);
 //		 }
-
+//
+//		}catch(Exception e){
+//			out.println(e.getMessage());
+//		}
+		
 		// tokenKeyEndpointURL
 		URL tokenKeyEndpointURL = new URL(Configuration.TOKEN_KEY_URI);
 		try {
@@ -281,7 +282,8 @@ public class Callback extends HttpServlet {
 			out.println("Couldn't send HTTP request to UserInfo endpoint: " + e.getMessage());
 			return;
 		}
-
+		
+		/*
 		UserInfoResponse userInfoResponse;
 
 		try {
@@ -305,14 +307,13 @@ public class Callback extends HttpServlet {
 		out.println("UserInfo:");
 
 		try {
-			// out.println(new
-			// PrettyJson().parseAndFormat(userInfo.toJSONObject().toString()));
 			out.println(userInfo.toJSONObject().toString());
 
 		} catch (Exception e) {
 
 			out.println("Couldn't parse UserInfo JSON object: " + e.getMessage());
 		}
+		*/
 
 		
 		out.println("</body>");

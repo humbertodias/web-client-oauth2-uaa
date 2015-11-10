@@ -38,6 +38,8 @@ import com.nimbusds.openid.connect.sdk.OIDCAccessTokenResponse;
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponseParser;
 import com.nimbusds.openid.connect.sdk.UserInfoRequest;
 
+import net.minidev.json.JSONObject;
+
 /**
  * OpenID Connect login callback target.
  */
@@ -56,14 +58,14 @@ public class Callback extends HttpServlet {
 		String queryString = req.getQueryString();
 
 		PrintWriter out = resp.getWriter();
-		
+
 		out.println("<html>");
 		out.println("<head><title>Nimbus OpenID Connect Test Client</title></head>");
 
 		out.println("<body>");
 
 		out.println("<pre>");
-		
+
 		out.println("URL query string with encoded authorization response: " + queryString + "\n\n");
 
 		if (queryString == null || queryString.trim().isEmpty()) {
@@ -127,9 +129,11 @@ public class Callback extends HttpServlet {
 
 		try {
 
-			AuthorizationCodeGrant authCodeGrant = new AuthorizationCodeGrant(code, new URI(Configuration.CALLBACK_URI));
+			AuthorizationCodeGrant authCodeGrant = new AuthorizationCodeGrant(code,
+					new URI(Configuration.CALLBACK_URI));
 
-			TokenRequest accessTokenRequest = new TokenRequest(tokenEndpointURL.toURI(), clientAuth, authCodeGrant, scope);
+			TokenRequest accessTokenRequest = new TokenRequest(tokenEndpointURL.toURI(), clientAuth, authCodeGrant,
+					scope);
 
 			httpRequest = accessTokenRequest.toHTTPRequest();
 
@@ -183,50 +187,55 @@ public class Callback extends HttpServlet {
 
 		out.println("<hr/>");
 
+		// tokenKeyEndpointURL
+		URL tokenKeyEndpointURL = new URL(Configuration.TOKEN_KEY_URI);
+		JSONObject jwt = null;
+		String token_key = null;
+		try {
+
+			UserInfoRequest tokenKeyRequest = new UserInfoRequest(tokenKeyEndpointURL.toURI(), accessToken);
+			httpRequest = tokenKeyRequest.toHTTPRequest();
+
+			// Aplica autenticação básica
+			ClientSecretBasic basic = new ClientSecretBasic(clientID, clientSecret);
+			basic.applyTo(httpRequest);
+
+			httpResponse = httpRequest.send();
+			out.println(tokenKeyEndpointURL.toString());
+			jwt = httpResponse.getContentAsJSONObject();
+			token_key = jwt.get("value").toString();
+			out.println("<pre>" + jwt.toJSONString() + "</pre>");
+
+		} catch (Exception e) {
+			out.println(e.getMessage());
+		}
+		// tokenKeyEndpointURL
+
 		// *** *** *** Process ID token which contains user auth information ***
 		// *** *** //
 		if (idToken != null) {
 
 			out.println("ID token [raw]: " + idToken.getParsedString());
 
-			out.println("jwt.header: " + idToken.getHeader() ) ;
-			out.println("jwt.payload: " + idToken.getPayload() );
-			out.println("jwt.signature: " + idToken.getSignature() );
-			
-			
+			out.println("jwt.header: " + idToken.getHeader());
+			out.println("jwt.payload: " + idToken.getPayload());
+			out.println("jwt.signature: " + idToken.getSignature());
+
 			out.println("jwt.keyId: " + idToken.getHeader().getKeyID());
-			out.println( "jwt.algorithm: " + idToken.getHeader().getAlgorithm() );
-			
-			JWSVerifier verifier = new MACVerifier(idToken.getParsedString().getBytes());
-			try{
-				out.println("verified: " + idToken.verify(verifier) );
-			}catch(Exception e){
-				out.println("Couldn't process ID token: " + e.getMessage());
-			}
-			
-			/*
-			// Validate the ID token by checking its HMAC;
-			// Note that PayPal HMAC generation is probably incorrect,
-			// there's also a bug in the "exp" claim type
+			out.println("jwt.algorithm: " + idToken.getHeader().getAlgorithm());
+
+			byte[] sharedSecret = new byte[32];
+			for (int i = 0; i < token_key.length(); i++)
+				sharedSecret[i] = (byte) token_key.charAt(i);
+
+			JWSVerifier verifier = new MACVerifier(sharedSecret);
 			try {
-
-				MACVerifier hmacVerifier = new MACVerifier(clientSecret.getValue().getBytes());
-
-				final boolean valid = idToken.verify(hmacVerifier);
-
-				out.println("ID token is valid: " + valid);
-
-				JSONObject jsonObject = idToken.getJWTClaimsSet().toJSONObject();
-
-				out.println("ID token [claims set]: \n" + jsonObject.toJSONString());
-
-				out.println("\n\n");
-
+				boolean valid = idToken.verify(verifier);
+				out.println("valid: " + valid);
 			} catch (Exception e) {
-
 				out.println("Couldn't process ID token: " + e.getMessage());
 			}
-			*/
+
 		}
 		out.println("</pre>");
 
@@ -234,41 +243,8 @@ public class Callback extends HttpServlet {
 
 		// tokenKeyEndpointURL
 
-		// XXXX
-//		try{
-//		 JWSObject jwsObject = JWSObject.parse(idToken.getParsedString());
-//
-//		 if (!jwsObject.verify(idToken))
-//		 {
-//		 throw new IllegalArgumentException("Fraudulent JWT token: " + jwt);
-//		 }
-//
-//		}catch(Exception e){
-//			out.println(e.getMessage());
-//		}
-		
-		// tokenKeyEndpointURL
-		URL tokenKeyEndpointURL = new URL(Configuration.TOKEN_KEY_URI);
-		try {
-			
-			UserInfoRequest tokenKeyRequest = new UserInfoRequest(tokenKeyEndpointURL.toURI(), accessToken);
-			httpRequest = tokenKeyRequest.toHTTPRequest();
-
-			// Aplica autenticação básica
-			ClientSecretBasic basic  = new ClientSecretBasic(clientID, clientSecret);
-			basic.applyTo(httpRequest);
-			
-			httpResponse = httpRequest.send();
-			out.println(tokenKeyEndpointURL.toString());
-			out.println("<pre>" + httpResponse.getContent() + "</pre>");
-
-		} catch (Exception e) {
-			out.println(e.getMessage());
-		}
-		// tokenKeyEndpointURL
-
 		out.println("<hr/>");
-		
+
 		// *** *** *** Make a UserInfo endpoint request *** *** *** //
 
 		// Note: The PayPal IdP uses an older OIDC draft version and
@@ -283,7 +259,7 @@ public class Callback extends HttpServlet {
 			UserInfoRequest userInfoRequest = new UserInfoRequest(userinfoEndpointURL.toURI(), accessToken);
 
 			httpResponse = userInfoRequest.toHTTPRequest().send();
-			
+
 			out.println(userinfoEndpointURL.toString());
 			out.println("<pre>" + httpResponse.getContent() + "</pre>");
 
@@ -293,43 +269,9 @@ public class Callback extends HttpServlet {
 			out.println("Couldn't send HTTP request to UserInfo endpoint: " + e.getMessage());
 			return;
 		}
-		
-		/*
-		UserInfoResponse userInfoResponse;
 
-		try {
-			userInfoResponse = UserInfoResponse.parse(httpResponse);
-
-		} catch (ParseException e) {
-
-			out.println("Couldn't parse UserInfo response: " + e.getMessage());
-			return;
-		}
-
-		if (userInfoResponse instanceof UserInfoErrorResponse) {
-
-			out.println("UserInfo request failed");
-			return;
-		}
-
-		out.println("<hr/>");
-		UserInfo userInfo = ((UserInfoSuccessResponse) userInfoResponse).getUserInfo();
-
-		out.println("UserInfo:");
-
-		try {
-			out.println(userInfo.toJSONObject().toString());
-
-		} catch (Exception e) {
-
-			out.println("Couldn't parse UserInfo JSON object: " + e.getMessage());
-		}
-		*/
-
-		
 		out.println("</body>");
 		out.println("</html>");
-		
-		
+
 	}
 }

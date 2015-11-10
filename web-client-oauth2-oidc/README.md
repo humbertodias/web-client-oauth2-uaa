@@ -5,6 +5,8 @@ Inicie o servidor de identidade
 Porta 8080
 
 ```
+$ git clone git://github.com/cloudfoundry/uaa.git
+$ cd uaa
 $ ./gradlew run
 ```
 

@@ -12,12 +12,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-//import com.thetransactioncompany.json.pretty.*;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.SignedJWT;
 import com.nimbusds.oauth2.sdk.AuthorizationCode;
 import com.nimbusds.oauth2.sdk.AuthorizationCodeGrant;
-import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.SerializeException;
 import com.nimbusds.oauth2.sdk.TokenErrorResponse;
@@ -37,13 +36,7 @@ import com.nimbusds.openid.connect.sdk.AuthenticationResponseParser;
 import com.nimbusds.openid.connect.sdk.AuthenticationSuccessResponse;
 import com.nimbusds.openid.connect.sdk.OIDCAccessTokenResponse;
 import com.nimbusds.openid.connect.sdk.OIDCTokenResponseParser;
-import com.nimbusds.openid.connect.sdk.UserInfoErrorResponse;
 import com.nimbusds.openid.connect.sdk.UserInfoRequest;
-import com.nimbusds.openid.connect.sdk.UserInfoResponse;
-import com.nimbusds.openid.connect.sdk.UserInfoSuccessResponse;
-import com.nimbusds.openid.connect.sdk.claims.UserInfo;
-
-import net.minidev.json.JSONObject;
 
 /**
  * OpenID Connect login callback target.
@@ -69,6 +62,7 @@ public class Callback extends HttpServlet {
 
 		out.println("<body>");
 
+		out.println("<pre>");
 		
 		out.println("URL query string with encoded authorization response: " + queryString + "\n\n");
 
@@ -133,9 +127,9 @@ public class Callback extends HttpServlet {
 
 		try {
 
-			AuthorizationCodeGrant acg = new AuthorizationCodeGrant(code, new URI(Configuration.CALLBACK_URI));
+			AuthorizationCodeGrant authCodeGrant = new AuthorizationCodeGrant(code, new URI(Configuration.CALLBACK_URI));
 
-			TokenRequest accessTokenRequest = new TokenRequest(tokenEndpointURL.toURI(), clientAuth, acg, scope);
+			TokenRequest accessTokenRequest = new TokenRequest(tokenEndpointURL.toURI(), clientAuth, authCodeGrant, scope);
 
 			httpRequest = accessTokenRequest.toHTTPRequest();
 
@@ -195,10 +189,22 @@ public class Callback extends HttpServlet {
 
 			out.println("ID token [raw]: " + idToken.getParsedString());
 
-			out.println("ID token JWS header: " + idToken.getHeader());
-
-			out.println("<br/>payload: <pre>" + idToken.getPayload().toString() + "</pre>");
-
+			out.println("jwt.header: " + idToken.getHeader() ) ;
+			out.println("jwt.payload: " + idToken.getPayload() );
+			out.println("jwt.signature: " + idToken.getSignature() );
+			
+			
+			out.println("jwt.keyId: " + idToken.getHeader().getKeyID());
+			out.println( "jwt.algorithm: " + idToken.getHeader().getAlgorithm() );
+			
+			JWSVerifier verifier = new MACVerifier(idToken.getParsedString().getBytes());
+			try{
+				out.println("verified: " + idToken.verify(verifier) );
+			}catch(Exception e){
+				out.println("Couldn't process ID token: " + e.getMessage());
+			}
+			
+			/*
 			// Validate the ID token by checking its HMAC;
 			// Note that PayPal HMAC generation is probably incorrect,
 			// there's also a bug in the "exp" claim type
@@ -212,8 +218,6 @@ public class Callback extends HttpServlet {
 
 				JSONObject jsonObject = idToken.getJWTClaimsSet().toJSONObject();
 
-				// out.println("ID token [claims set]: \n" + new
-				// PrettyJson().format(jsonObject));
 				out.println("ID token [claims set]: \n" + jsonObject.toJSONString());
 
 				out.println("\n\n");
@@ -222,19 +226,27 @@ public class Callback extends HttpServlet {
 
 				out.println("Couldn't process ID token: " + e.getMessage());
 			}
+			*/
 		}
+		out.println("</pre>");
+
 		out.println("<hr/>");
 
 		// tokenKeyEndpointURL
 
 		// XXXX
+//		try{
 //		 JWSObject jwsObject = JWSObject.parse(idToken.getParsedString());
-//		
+//
 //		 if (!jwsObject.verify(idToken))
 //		 {
 //		 throw new IllegalArgumentException("Fraudulent JWT token: " + jwt);
 //		 }
-
+//
+//		}catch(Exception e){
+//			out.println(e.getMessage());
+//		}
+		
 		// tokenKeyEndpointURL
 		URL tokenKeyEndpointURL = new URL(Configuration.TOKEN_KEY_URI);
 		try {
@@ -281,7 +293,8 @@ public class Callback extends HttpServlet {
 			out.println("Couldn't send HTTP request to UserInfo endpoint: " + e.getMessage());
 			return;
 		}
-
+		
+		/*
 		UserInfoResponse userInfoResponse;
 
 		try {
@@ -305,14 +318,13 @@ public class Callback extends HttpServlet {
 		out.println("UserInfo:");
 
 		try {
-			// out.println(new
-			// PrettyJson().parseAndFormat(userInfo.toJSONObject().toString()));
 			out.println(userInfo.toJSONObject().toString());
 
 		} catch (Exception e) {
 
 			out.println("Couldn't parse UserInfo JSON object: " + e.getMessage());
 		}
+		*/
 
 		
 		out.println("</body>");

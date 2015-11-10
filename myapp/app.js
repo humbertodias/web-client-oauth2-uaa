@@ -51,12 +51,12 @@ app.get('/callback', function(req, res) {
     getTokenkey(clientid, clientsecret, function(tokenkeyJson) {
       var idToken = JWT.verify(tokens.id_token,tokenkeyJson.value);
 	  console.log('idToken:' + idToken);
-	
+	  
 	  sub = idToken.sub;
 	  user_name = idToken.user_name;
 	  email = idToken.email;
 	  scope = idToken.scope;
-	
+	  
 	  console.log('sub:'+ sub);
 	
       var txt = '<html><head>'
@@ -71,51 +71,33 @@ app.get('/callback', function(req, res) {
               + '<div class="panel panel-warning">'
               + '<div class="panel-heading"><h5><code>oauth/token</code> response</h3></div>'
               + '<div class="panel-body">'
-              + '<div class="row">'
-              + '<div class="col-sm-2"><span class="label label-primary">access_token</span></div><div class="col-sm-10">' + tokens.access_token + '</div>'
-              + '</div>'
-              + '<div class="row">'
-              + '<div class="col-sm-2"><span class="label label-primary">token_type</span></div><div class="col-sm-10">' +  tokens.token_type + '</div>'
-              + '</div>'
-              + '<div class="row">'
-              + '<div class="col-sm-2"><span class="label label-primary">id_token</span></div><div class="col-sm-10">' + tokens.id_token + '</div>'
-              + '</div>'
-              + '<div class="row">'
-              + '<div class="col-sm-2"><span class="label label-primary">refresh_token</span></div><div class="col-sm-10">' + tokens.refresh_token + '</div>'
-              + '</div>'
-              + '<div class="row">'
-              + '<div class="col-sm-2"><span class="label label-primary">expires_in</span></div><div class="col-sm-10">' + tokens.expires_in + '</div>'
-              + '</div>'
-              + '<div class="row">'
-              + '<div class="col-sm-2"><span class="label label-primary">scope</span></div><div class="col-sm-10">' + tokens.scope + '</div>'
-              + '</div>'
-              + '<div class="row">'
-              + '<div class="col-sm-2"><span class="label label-primary">jti</span></div><div class="col-sm-10">' + tokens.jti + '</div>'
-              + '</div>'
-              + '</div>'
-              + '</div>'
               ;
-        txt += '<hr>';
+      Object.keys(tokens).forEach(function(key){
+        txt += '<div class="row">'
+             + '<div class="col-sm-2"><span class="label label-primary">'+ key + '</span></div><div class="col-sm-10">' + tokens[key] + '</div>'
+             + '</div>'
+      });
+      txt   += '</div>'
+             + '</div>'
+             ;
+      txt += '<hr>';
       
-        txt +=  '<div class="panel panel-success">'
-            + '<div class="panel-heading"><h5><code>id_token</code> parsed</h3></div>'
-            + '<div class="panel-body">'
-            + '<div class="row">'
-            + '<div class="col-sm-2"><span class="label label-primary">id_token</span></div><div class="col-sm-10">' + new Buffer(tokens.id_token, 'base64') + '</div>'
+      txt +=  '<div class="panel panel-success">'
+           + '<div class="panel-heading"><h5><code>id_token</code> parsed</h3></div>'
+           + '<div class="panel-body">'
+           + '<div class="row">'
+           + '<div class="col-sm-2"><span class="label label-primary">id_token</span></div><div class="col-sm-10">' + new Buffer(tokens.id_token, 'base64') + '</div>'
+           + '</div>'
+           ;
+      Object.keys(idToken).forEach(function(key) {
+        txt += '<div class="row">'
+            + '<div class="col-sm-2"><span class="label label-primary">' + key + '</span></div><div class="col-sm-10">' + idToken[key] + '</div>'
             + '</div>'
-            + '<div class="row">'
-            + '<div class="col-sm-2"><span class="label label-primary">sub</span></div><div class="col-sm-10">' + sub + '</div>'
-            + '</div>'
-            + '<div class="row">'
-            + '<div class="col-sm-2"><span class="label label-primary">user_name</span></div><div class="col-sm-10">' + user_name + '</div>'
-            + '</div>'
-            + '<div class="row">'
-            + '<div class="col-sm-2"><span class="label label-primary">email</span></div><div class="col-sm-10">' + email + '</div>'
-            + '</div>'
-            + '<div class="row">'
-            + '<div class="col-sm-2"><span class="label label-primary">scope</span></div><div class="col-sm-10">' + scope + '</div>'
-            + '</div>'
-            + '</div>'
+            ;
+        console.log(key + ':' + idToken[key]);
+      });
+
+      txt  += '</div>'
             + '</div>'
             + '</div>'
             + '</body></html>'
